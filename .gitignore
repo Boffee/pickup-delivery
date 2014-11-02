@@ -1,0 +1,8 @@
+.metadata/
+.DS_Store
+.classpath
+.settings
+.project
+bin/
+local.properties
+*~
