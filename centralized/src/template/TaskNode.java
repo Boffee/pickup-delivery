@@ -6,6 +6,7 @@ public class TaskNode {
 	private Task currTask;
 	private TaskNode prevTaskNode;
 	private TaskNode nextTaskNode;
+	private int time;
 	
 	public TaskNode(Task _currTask, TaskNode _prevTaskNode, TaskNode _nextTaskNode) {
 		currTask = _currTask;
@@ -13,11 +14,17 @@ public class TaskNode {
 		nextTaskNode = _nextTaskNode;
 	}
 	
+	/**
+	 * switch the position between two taskNodes
+	 * @param otherTaskNode
+	 */
 	public void switchWith(TaskNode otherTaskNode) {
 		TaskNode otherPrev = otherTaskNode.getPrevTaskNode();
 		TaskNode otherNext = otherTaskNode.getNextTaskNode();
+		
 		TaskNode currPrev = prevTaskNode;
 		TaskNode currNext = nextTaskNode;
+		
 		otherPrev.setNextTaskNode(this);
 		otherNext.setPrevTaskNode(this);
 		
@@ -29,7 +36,11 @@ public class TaskNode {
 		
 		this.setNextTaskNode(otherNext);
 		this.setPrevTaskNode(otherPrev);
-				
+		
+		int otherTime = otherTaskNode.getTime();
+		int currTime = time;
+		otherTaskNode.setTime(currTime);
+		time = otherTime;
 	}
 
 	public Task getCurrTask() {
@@ -50,6 +61,14 @@ public class TaskNode {
 
 	public void setNextTaskNode(TaskNode nextTaskNode) {
 		this.nextTaskNode = nextTaskNode;
+	}
+
+	public Integer getTime() {
+		return time;
+	}
+
+	public void setTime(Integer time) {
+		this.time = time;
 	}
 	
 	
