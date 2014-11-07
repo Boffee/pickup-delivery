@@ -14,8 +14,8 @@ public class TaskNodeList {
 
 	/**
 	 * swap the order of two tasks
-	 * @param tIdx1
-	 * @param tIdx2
+	 * @param task1 index
+	 * @param task2 index
 	 */
 	public void swapTasksOrder(int tIdx1, int tIdx2) {
 		TaskNode task1 = tasks.remove(tIdx1);

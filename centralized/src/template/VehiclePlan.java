@@ -2,6 +2,7 @@ package template;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import logist.simulation.Vehicle;
 import logist.task.Task;
@@ -11,8 +12,9 @@ public class VehiclePlan {
 	private Vehicle vehicle;
 	private List<Task> tasks;
 	private double cost;
+	private int index;
 
-	public VehiclePlan (Vehicle _vehicle, List<Task> _tasks) {
+	public VehiclePlan (Vehicle _vehicle, List<Task> _tasks, int index) {
 		vehicle = _vehicle;
 		cost = 0;
 		if (_tasks == null) {
@@ -27,6 +29,7 @@ public class VehiclePlan {
 		vehicle = vPlan.vehicle;
 		tasks = new ArrayList<Task>(vPlan.tasks);
 		cost = vPlan.cost;
+		index = vPlan.index;
 	}
 
 	/**
@@ -87,21 +90,30 @@ public class VehiclePlan {
 
 
 	/**
-	 * find the best task ordering out of all possible ordering
-	 * @return the best task ordering plan
+	 * find all task ordering out of all possible ordering
+	 * @return the all ordering with the best ordering at the front
 	 */
-	public VehiclePlan bestTaskOrder() {
-		VehiclePlan bestPlan = this;
+	public List<VehiclePlan> changeOrders() {
+		List<VehiclePlan> planOrders = new ArrayList<VehiclePlan>();
+		planOrders.add(this);
 		for (int i = 0; i < tasks.size()-1; i++) {
 			for (int j = i+1; j < tasks.size(); j++) {
-				VehiclePlan newPlan = new VehiclePlan(vehicle, new ArrayList<Task>(tasks));
+				VehiclePlan newPlan = new VehiclePlan(this);
 				newPlan.swapTasksOrder(i, j);
+				
+				VehiclePlan bestPlan = planOrders.get(0);
 				if (newPlan.cost < bestPlan.cost) {
-					bestPlan = newPlan;
+					planOrders.add(0, newPlan);
+				} else if (newPlan.cost == bestPlan.cost) {
+					if ((new Random().nextBoolean())) {
+						planOrders.add(0, newPlan);
+					}
+				} else {
+					planOrders.add(newPlan);
 				}
 			}
 		}
-		return bestPlan;
+		return planOrders;
 	}
 
 	public int size() {
@@ -123,5 +135,9 @@ public class VehiclePlan {
 	
 	public double getCost() {
 		return cost;
+	}
+	
+	public int getIndex() {
+		return index;
 	}
 }
