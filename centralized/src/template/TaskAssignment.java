@@ -1,15 +1,12 @@
 package template;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import logist.simulation.Vehicle;
 import logist.task.Task;
 import logist.task.TaskSet;
-import logist.topology.Topology;
 
 public class TaskAssignment {
 
@@ -22,14 +19,19 @@ public class TaskAssignment {
 
 	public TaskAssignment(List<Vehicle> _vehicles, TaskSet _tasks) {
 		Vehicle largestVehicle = _vehicles.get(0);
-		for (Vehicle vehicle: _vehicles) {
-			plans.add(new VehiclePlan(vehicle, null, plans.size()));
+		Integer largestVehicleIndex = 0;
+		for (int i = 0; i < _vehicles.size(); i++) {
+			Vehicle vehicle = _vehicles.get(i);
+			plans.add(new VehiclePlan(vehicle, null, i));
 			if (vehicle.capacity() > largestVehicle.capacity()) {
 				largestVehicle = vehicle;
+				largestVehicleIndex = i;
 			}
 		}
+		
 		for (Task task : _tasks) {
 			tasks.add(task);
+			plans.get(largestVehicleIndex).addTask(task);
 		}
 	}
 
@@ -46,25 +48,29 @@ public class TaskAssignment {
 			int pIndex = rand.nextInt(plans.size());
 			plan1 = plans.get(pIndex);
 		} while (plan1.size() == 0);
+		
+		for (VehiclePlan plan: plans) {
+				System.out.print(plan.size() + ", ");
+		}
+		System.out.println();
 
 		// pick a random task in plan1 and remove it
 		VehiclePlan newPlan1 = new VehiclePlan(plan1);
 		int tIndex = rand.nextInt(newPlan1.size());		
 		Task removedTask = newPlan1.removeTask(tIndex);
 		double baseCostChange = newPlan1.getCost() - plan1.getCost();
-
+	
 		List<VehiclePlan> vehicleChanges = changeVehicles(plan1, removedTask);
-
 		List<VehiclePlan> orderChanges = plan1.changeOrders();
 
-		VehiclePlan replacementPlan;
 		if (rand.nextDouble() > prob) {
-			int index = rand.nextInt(vehicleChanges.size()+orderChanges.size());
-			if (index >= vehicleChanges.size()) {
-				index -= vehicleChanges.size();
-				replacementPlan = orderChanges.get(index);
+			if (rand.nextDouble() > .5) {
+				int index = rand.nextInt(orderChanges.size());
+				replaceWith(orderChanges.get(index));
 			} else {
-				replacementPlan = vehicleChanges.get(index); 
+				int index = rand.nextInt(vehicleChanges.size());
+				replaceWith(vehicleChanges.get(index));
+				replaceWith(newPlan1);
 			}
 
 		} else {
@@ -82,19 +88,27 @@ public class TaskAssignment {
 			}
 
 			if (costChange1 < costChange2) {
-				replacementPlan = bestPlan1;
+				replaceWith(bestPlan1);
+				replaceWith(newPlan1);
 			} else if (costChange1 == costChange2) {
-				if(rand.nextBoolean()) replacementPlan = bestPlan1;
-				else replacementPlan = bestPlan2;
+				if(rand.nextBoolean()) {
+					replaceWith(bestPlan1);
+					replaceWith(newPlan1);
+				}
+				else replaceWith(bestPlan2);
 			}
 			else {
-				replacementPlan = bestPlan2;
+				replaceWith(bestPlan2);
 			}
 		}
+		
+		return false;
+	}
+	
+	private void replaceWith(VehiclePlan replacementPlan) {
 		int planIndex = replacementPlan.getIndex();
 		plans.remove(planIndex);
 		plans.add(planIndex, replacementPlan);
-		return false;
 	}
 
 
@@ -109,22 +123,19 @@ public class TaskAssignment {
 
 		for (int i = 0; i < plans.size(); i++) {
 			VehiclePlan plan2 = plans.get(i);
-			if (plan2 != plan1) {
+			if (plan2.getIndex() != plan1.getIndex()) {
 
 				VehiclePlan newPlan2 = new VehiclePlan(plan2);
 				int tIndex = rand.nextInt(newPlan2.size()+1);
 
 				if (newPlan2.addTask(tIndex, removedTask)) {
-
 					double origCost = plan2.getCost();
 					double newCost = newPlan2.getCost();
 					double costChange = newCost-origCost;
 
 					if (bestCostChange == null) {
 						bestCostChange = costChange;
-					}
-					// check if this plan2 is better than the currentBest
-					if ( costChange < bestCostChange) {
+					} else if ( costChange < bestCostChange) {
 						bestCostChange = costChange;
 						vehicleChanges.add(0, newPlan2);
 					} else if ( costChange == bestCostChange) {
@@ -152,7 +163,6 @@ public class TaskAssignment {
 	public List<Task> getTasks() {
 		return tasks;
 	}
-
 
 
 }

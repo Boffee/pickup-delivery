@@ -4,9 +4,9 @@
 	<!-- A list of agents and their behavior classes -->
 	
 	<!-- #### CENTRALIZED AGENTS ### -->
-	<agent name="centralized-random">
+	<agent name="centralized-sls">
 		<set class-path="bin/"/>
-		<set class-name="template.CentralizedTemplate"/>
+		<set class-name="template.Centralized"/>
 	</agent>
 	
 </agents>

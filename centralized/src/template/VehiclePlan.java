@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import logist.plan.Plan;
 import logist.simulation.Vehicle;
 import logist.task.Task;
+import logist.task.TaskSet;
 import logist.topology.Topology.City;
 
 public class VehiclePlan {
@@ -14,8 +16,9 @@ public class VehiclePlan {
 	private double cost;
 	private int index;
 
-	public VehiclePlan (Vehicle _vehicle, List<Task> _tasks, int index) {
+	public VehiclePlan (Vehicle _vehicle, List<Task> _tasks, int _index) {
 		vehicle = _vehicle;
+		index = _index;
 		cost = 0;
 		if (_tasks == null) {
 			tasks = new ArrayList<Task>();
@@ -38,16 +41,14 @@ public class VehiclePlan {
 	 * @param tIdx2
 	 */
 	public void swapTasksOrder(int tIdx1, int tIdx2) {
-		Task task1 = tasks.remove(tIdx1);
-		Task task2 = tasks.remove(tIdx2);
+		Task task1 = tasks.get(tIdx1);
+		Task task2 = tasks.get(tIdx2);
 		// prevent index out of bound problems
-		if (tIdx1 < tIdx2) {
-			tasks.add(tIdx1, task2);
-			tasks.add(tIdx2, task1);
-		} else {
-			tasks.add(tIdx2, task1);
-			tasks.add(tIdx1, task2);
-		}
+		tasks.remove(tIdx1);
+		tasks.add(tIdx1, task2);
+		tasks.remove(tIdx2);
+		tasks.add(tIdx2, task1);
+
 		computeCost();
 	}
 
@@ -66,7 +67,7 @@ public class VehiclePlan {
 			return true;
 		}
 	}
-	
+
 	public boolean addTask(int index, Task task) {
 		if (task.weight > vehicle.capacity()) {
 			return false;
@@ -83,7 +84,7 @@ public class VehiclePlan {
 	 * @return the removed Task
 	 */
 	public Task removeTask(int tIdx) {
-		Task rmTask = tasks.get(tIdx);
+		Task rmTask = tasks.remove(tIdx);
 		computeCost();
 		return rmTask;
 	}
@@ -100,7 +101,7 @@ public class VehiclePlan {
 			for (int j = i+1; j < tasks.size(); j++) {
 				VehiclePlan newPlan = new VehiclePlan(this);
 				newPlan.swapTasksOrder(i, j);
-				
+
 				VehiclePlan bestPlan = planOrders.get(0);
 				if (newPlan.cost < bestPlan.cost) {
 					planOrders.add(0, newPlan);
@@ -116,6 +117,29 @@ public class VehiclePlan {
 		return planOrders;
 	}
 
+	public Plan getPlan() {
+		City current = vehicle.getCurrentCity();
+		Plan plan = new Plan(current);
+
+		for (Task task : tasks) {
+			// move: current city => pickup location
+			for (City city : current.pathTo(task.pickupCity))
+				plan.appendMove(city);
+
+			plan.appendPickup(task);
+
+			// move: pickup location => delivery location
+			for (City city : task.path())
+				plan.appendMove(city);
+
+			plan.appendDelivery(task);
+
+			// set current city
+			current = task.deliveryCity;
+		}
+		return plan;
+	}
+
 	public int size() {
 		return tasks.size();
 	}
@@ -124,6 +148,7 @@ public class VehiclePlan {
 	 * compute the cost of the plan
 	 */
 	private void computeCost() {
+		cost = 0;
 		City currCity = vehicle.getCurrentCity();
 		for (Task task: tasks) {
 			cost += currCity.distanceTo(task.pickupCity);
@@ -132,12 +157,17 @@ public class VehiclePlan {
 			currCity = task.deliveryCity;
 		}
 	}
-	
+
 	public double getCost() {
 		return cost;
 	}
-	
+
 	public int getIndex() {
 		return index;
 	}
+	
+	public Vehicle getVehicle() {
+		return vehicle;
+	}
+
 }
