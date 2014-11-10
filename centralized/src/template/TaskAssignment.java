@@ -28,7 +28,7 @@ public class TaskAssignment {
 				largestVehicleIndex = i;
 			}
 		}
-		
+
 		for (Task task : _tasks) {
 			tasks.add(task);
 			plans.get(largestVehicleIndex).addTask(task);
@@ -48,109 +48,133 @@ public class TaskAssignment {
 			int pIndex = rand.nextInt(plans.size());
 			plan1 = plans.get(pIndex);
 		} while (plan1.size() == 0);
-		
+
 		for (VehiclePlan plan: plans) {
-				System.out.print(plan.size() + ", ");
+			System.out.print(plan.size() + ", ");
 		}
 		System.out.println();
 
 		// pick a random task in plan1 and remove it
 		VehiclePlan newPlan1 = new VehiclePlan(plan1);
-		int tIndex = rand.nextInt(newPlan1.size());		
-		Task removedTask = newPlan1.removeTask(tIndex);
-		double baseCostChange = newPlan1.getCost() - plan1.getCost();
-	
-		List<VehiclePlan> vehicleChanges = changeVehicles(plan1, removedTask);
+//		int tIndex = rand.nextInt(newPlan1.size());		
+//		Task removedTask = newPlan1.removeTask(tIndex);
+//		double baseCostChange = newPlan1.getCost() - plan1.getCost();
+
+		List<VehiclePlan> vehicleChanges = changeVehicles(plan1);
 		List<VehiclePlan> orderChanges = plan1.changeOrders();
 
 		if (rand.nextDouble() > prob) {
 			if (rand.nextDouble() > .5) {
 				int index = rand.nextInt(orderChanges.size());
-				replaceWith(orderChanges.get(index));
+				planChange(orderChanges.get(index));
 			} else {
 				int index = rand.nextInt(vehicleChanges.size());
-				replaceWith(vehicleChanges.get(index));
-				replaceWith(newPlan1);
+				int remove = vehicleChanges.get(index).lastAdded;
+				newPlan1.removeTask(remove);
+				planChange(newPlan1, vehicleChanges.get(index));
+				//				replaceWith(vehicleChanges.get(index));
+				//				replaceWith(newPlan1);
 			}
 
 		} else {
-			VehiclePlan bestPlan1 = vehicleChanges.get(0);
-			int p1Index = bestPlan1.getIndex();
-			double costChange1 = bestPlan1.getCost()-plans.get(p1Index).getCost()+baseCostChange;
+			VehiclePlan bestVehicleChange = vehicleChanges.get(0);
+			int p1Index = bestVehicleChange.getIndex();
+			int remove = bestVehicleChange.lastAdded;
+			newPlan1.removeTask(remove);
+			double costChangeV = bestVehicleChange.getCost()-plans.get(p1Index).getCost()
+					+newPlan1.getCost()-plan1.getCost();
 
-			VehiclePlan bestPlan2 = orderChanges.get(0);
-			int p2Index = bestPlan2.getIndex();
-			double costChange2 = bestPlan2.getCost()-plans.get(p2Index).getCost();
+
+			VehiclePlan bestOrderChange = orderChanges.get(0);
+			int p2Index = bestOrderChange.getIndex();
+			double costChangeO = bestOrderChange.getCost()-plans.get(p2Index).getCost();
 
 			// termination condition
-			if (costChange1 >= 0 && costChange2 >= 0) {
+			if (costChangeV >= 0 && costChangeO >= 0) {
 				return true;
 			}
 
-			if (costChange1 < costChange2) {
-				replaceWith(bestPlan1);
-				replaceWith(newPlan1);
-			} else if (costChange1 == costChange2) {
+			if (costChangeV < costChangeO) {
+				planChange(newPlan1, bestVehicleChange);
+				//				replaceWith(bestPlan2a);
+				//				replaceWith(newPlan1);
+			} else if (costChangeV == costChangeO) {
 				if(rand.nextBoolean()) {
-					replaceWith(bestPlan1);
-					replaceWith(newPlan1);
+					planChange(newPlan1, bestVehicleChange);
+					//					replaceWith(bestPlan2a);
+					//					replaceWith(newPlan1);
 				}
-				else replaceWith(bestPlan2);
+				else {
+					planChange(bestOrderChange); 
+					//replaceWith(bestPlan2b);
+				}
 			}
 			else {
-				replaceWith(bestPlan2);
+				planChange(bestOrderChange);
+				//replaceWith(bestPlan2b);
 			}
 		}
-		
+
 		return false;
 	}
+
+	private void planChange(VehiclePlan replacementPlan) {
+		plans.remove(replacementPlan.getIndex());
+		plans.add(replacementPlan.getIndex(), replacementPlan);
+	}
 	
-	private void replaceWith(VehiclePlan replacementPlan) {
-		int planIndex = replacementPlan.getIndex();
-		plans.remove(planIndex);
-		plans.add(planIndex, replacementPlan);
+	private void planChange(VehiclePlan replacementPlan1, VehiclePlan replacementPlan2) {
+		plans.remove(replacementPlan2.getIndex());
+		plans.add(replacementPlan2.getIndex(), replacementPlan2);
+		
+		plans.remove(replacementPlan1.getIndex());
+		plans.add(replacementPlan1.getIndex(), replacementPlan1);
 	}
 
 
 	/**
 	 * @return 
 	 */
-	private List<VehiclePlan> changeVehicles(VehiclePlan plan1, Task removedTask) {
+	private List<VehiclePlan> changeVehicles(VehiclePlan plan1) {
 
 		List<VehiclePlan> vehicleChanges = new ArrayList<VehiclePlan>();
 
-		Double bestCostChange = null;
+		Double bestCostImprove = null;
 
-		for (int i = 0; i < plans.size(); i++) {
-			VehiclePlan plan2 = plans.get(i);
-			if (plan2.getIndex() != plan1.getIndex()) {
+		for (int j = 0; j < plan1.size(); j++) {
+			Task removedTask = plan1.getTask(j);
+			for (int i = 0; i < plans.size(); i++) {
+				VehiclePlan plan2 = plans.get(i);
+				plan2.lastAdded = j;
+				if (plan2.getIndex() != plan1.getIndex()) {
 
-				VehiclePlan newPlan2 = new VehiclePlan(plan2);
-				int tIndex = rand.nextInt(newPlan2.size()+1);
+					VehiclePlan newPlan2 = new VehiclePlan(plan2);
+					int tIndex = rand.nextInt(newPlan2.size()+1);
 
-				if (newPlan2.addTask(tIndex, removedTask)) {
-					double origCost = plan2.getCost();
-					double newCost = newPlan2.getCost();
-					double costChange = newCost-origCost;
+					if (newPlan2.addTask(tIndex, removedTask)) {
+						double origCost = plan2.getCost();
+						double newCost = newPlan2.getCost();
+						double costImporve = newCost-origCost;
 
-					if (bestCostChange == null) {
-						bestCostChange = costChange;
-					} else if ( costChange < bestCostChange) {
-						bestCostChange = costChange;
-						vehicleChanges.add(0, newPlan2);
-					} else if ( costChange == bestCostChange) {
-						if(rand.nextBoolean()) {
+						if (bestCostImprove == null) {
+							bestCostImprove = costImporve;
+						} else if ( costImporve < bestCostImprove) {
+							bestCostImprove = costImporve;
 							vehicleChanges.add(0, newPlan2);
+						} else if ( costImporve == bestCostImprove) {
+							if(rand.nextBoolean()) {
+								vehicleChanges.add(0, newPlan2);
+							}
+						} else {
+							vehicleChanges.add(newPlan2);
 						}
-					} else {
-						vehicleChanges.add(newPlan2);
 					}
 				}
 			}
 		}
-
 		return vehicleChanges;
 	}
+
 
 	public List<VehiclePlan> getPlans() {
 		boolean stop = false;
@@ -163,6 +187,5 @@ public class TaskAssignment {
 	public List<Task> getTasks() {
 		return tasks;
 	}
-
 
 }

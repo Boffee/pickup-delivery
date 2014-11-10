@@ -15,6 +15,8 @@ public class VehiclePlan {
 	private List<Task> tasks;
 	private double cost;
 	private int index;
+	
+	public int lastAdded;
 
 	public VehiclePlan (Vehicle _vehicle, List<Task> _tasks, int _index) {
 		vehicle = _vehicle;
@@ -156,6 +158,10 @@ public class VehiclePlan {
 
 			currCity = task.deliveryCity;
 		}
+	}
+	
+	public Task getTask(int index) {
+		return tasks.get(index);
 	}
 
 	public double getCost() {
