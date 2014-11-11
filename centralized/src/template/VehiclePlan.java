@@ -20,6 +20,12 @@ public class VehiclePlan {
 	
 	public int lastAdded;
 
+	/**
+	 * constructor
+	 * @param _vehicle
+	 * @param _tasks
+	 * @param _index
+	 */
 	public VehiclePlan (Vehicle _vehicle, List<Task> _tasks, int _index) {
 		vehicle = _vehicle;
 		index = _index;
@@ -31,6 +37,10 @@ public class VehiclePlan {
 		}
 	}
 
+	/**
+	 * copy constructor
+	 * @param vPlan
+	 */
 	public VehiclePlan (VehiclePlan vPlan) {
 		vehicle = vPlan.vehicle;
 		tasks = new ArrayList<Task>(vPlan.tasks);
@@ -68,6 +78,12 @@ public class VehiclePlan {
 		}
 	}
 
+	/**
+	 * add a task to the plan at the specified index
+	 * @param index
+	 * @param task
+	 * @return add success/fail
+	 */
 	public boolean addTask(int index, Task task) {
 		if (task.weight > vehicle.capacity()) {
 			return false;
@@ -77,6 +93,11 @@ public class VehiclePlan {
 		}
 	}
 	
+	/**
+	 * sum the weight of tasks in a list
+	 * @param tasks
+	 * @return total weight
+	 */
 	public int sumWeight(List<Task> tasks) {
 
 		int weight = 0;
@@ -126,18 +147,30 @@ public class VehiclePlan {
 		return planOrders;
 	}
 
+	/**
+	 * get the actions plan
+	 * @return actions plan
+	 */
 	public Plan getPlan() {
 		System.out.println(tasks);
 		System.out.println(plan);
 		return plan;
 	}
 
+	/**
+	 * get size of plan
+	 * @return size of plan
+	 */
 	public int size() {
 		return tasks.size();
 	}
 
 	/**
-	 * compute the cost of the plan
+	 * compute the cost of the plan.
+	 * First pickup the tasks at the starting city
+	 * Then move to the first task pickup city and pickup/deliver all available tasks on the way there
+	 * Then move to the delivery city and pickup/deliver all available tasks on path
+	 * repeat last 2 steps until every task is delivered
 	 */
 	private void computeCost() {
 		cost = 0;
@@ -149,12 +182,12 @@ public class VehiclePlan {
 		City currCity = vehicle.getCurrentCity();
 		plan = new Plan(currCity);
 		
-		pickupTasks(currCity, carriedTasks, idleTasks, 2*heaviestTask);
+		pickupTasks(currCity, carriedTasks, idleTasks, heaviestTask);
 		
 		for (Task targetTask: tasks) {
-
+			// if targetTask is not picked up yet
 			if (idleTasks.contains(targetTask)) {
-				
+				// move through all cities on path to pickup
 				List<City> cities = currCity.pathTo(targetTask.pickupCity);
 				for (City city : cities) {
 					plan.appendMove(city);
@@ -172,8 +205,9 @@ public class VehiclePlan {
 				}
 			}
 			
+			// if targetTask is picked up and not delivered
 			if (carriedTasks.contains(targetTask)) {
-				
+				// move through all cities on path to delivery
 				List<City> cities = currCity.pathTo(targetTask.deliveryCity);
 				for (City city : cities) {
 					plan.appendMove(city);
@@ -185,6 +219,8 @@ public class VehiclePlan {
 				}
 			}
 		}
+		
+		// debug
 		if (carriedTasks.size() != 0 && idleTasks.size() != 0) {
 			System.out.println(carriedTasks.size() + " : " + idleTasks.size());
 		}
@@ -200,6 +236,16 @@ public class VehiclePlan {
 		return heaviest;
 	}
 	
+	/**
+	 * picks up all tasks available at the current city without exceeding the capacity and add the pickup actions to plan
+	 * 
+	 * The commented out region is an alternative search method (comment out the current method and uncomment the alternative):
+	 * It only adds the task available at the current city if it is the next sequential task.
+	 * @param currCity
+	 * @param carriedTasks
+	 * @param idleTasks
+	 * @param allowableWeight
+	 */
 	private void pickupTasks(City currCity, List<Task> carriedTasks, List<Task> idleTasks, int allowableWeight) {
 		List<Task> removedTasks = new ArrayList<Task>();
 		// pickup tasks that are on the path to the current task and are within the capacity
@@ -216,8 +262,27 @@ public class VehiclePlan {
 			}
 		}
 		removeFromList(removedTasks, idleTasks);
+//		if (idleTasks.size() == 0) return;
+//		Task nextTask = idleTasks.get(0);
+//		if(currCity == nextTask.pickupCity) {
+//			if (sumWeight(carriedTasks) + allowableWeight <= vehicle.capacity()) {
+//				carriedTasks.add(nextTask);
+//				idleTasks.remove(nextTask);
+//				
+//				plan.appendPickup(nextTask);
+//				
+//				pickupTasks(currCity, carriedTasks, idleTasks, allowableWeight);
+//			}
+//		}
 	}
 	
+	/**
+	 * delivers the carried tasks carried by the vehicle if the current city is the corresponding
+	 * delivery city.
+	 * @param currCity
+	 * @param carriedTasks
+	 * @param idleTasks
+	 */
 	private void deliverTasks(City currCity, List<Task> carriedTasks, List<Task> idleTasks) {
 		// deliver tasks that are on the current path
 		for (int i = carriedTasks.size()-1; i >= 0; i--) {
@@ -230,24 +295,49 @@ public class VehiclePlan {
 		}
 	}
 		
+	/**
+	 * remove a list of tasks from a lost of tasks
+	 * Note: the removeAll method of List doesn't work sometimes
+	 * @param removes
+	 * @param orig
+	 */
 	private void removeFromList(List<Task> removes, List<Task> orig) {
 		for (Task remove: removes) {
 			orig.remove(remove);
 		}
 	}
+	
+	
+	/**
+	 * get the task at the given index
+	 * @param index
+	 * @return task at the index
+	 */
 	public Task getTask(int index) {
 		return tasks.get(index);
 	}
 
+	/**
+	 * computes the cost of the plan
+	 * @return plan cost
+	 */
 	public double getCost() {
 		computeCost(); 
 		return cost;
 	}
 
+	/**
+	 * get the index of this VehiclePlan inside the VehiclePlan List in TaskAssignment
+	 * @return index of this plan
+	 */
 	public int getIndex() {
 		return index;
 	}
 	
+	/**
+	 * get the vehicle of this plan
+	 * @return vehicle
+	 */
 	public Vehicle getVehicle() {
 		return vehicle;
 	}
