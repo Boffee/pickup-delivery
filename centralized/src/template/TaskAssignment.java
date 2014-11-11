@@ -16,7 +16,7 @@ public class TaskAssignment {
 
 	private Random rand = new Random();
 
-	private final static double prob = 0.5;
+	private double prob = 0.5;
 
 
 	public TaskAssignment(List<Vehicle> _vehicles, TaskSet _tasks) {
@@ -53,12 +53,12 @@ public class TaskAssignment {
 		} while (plan1.size() == 0);
 
 		double origPlan1Cost = plan1.getCost();
+//		updateProb(plan1);
 
-
-//		for (VehiclePlan plan: plans) {
-//			System.out.print(plan.size() + ", ");
-//		}
-//		System.out.println();
+		for (VehiclePlan plan: plans) {
+			System.out.print(plan.size() + ", ");
+		}
+		System.out.println();
 
 		List<VehiclePlan> vehicleChanges = changeVehicles(plan1);
 		List<VehiclePlan> orderChanges = plan1.changeOrders();
@@ -92,7 +92,6 @@ public class TaskAssignment {
 			double costChangeV = bestVehicleChange.getCost()-plans.get(p1Index).getCost()
 					+plan1.getCost()-origPlan1Cost;
 
-			//			System.out.println("vehicle change: " + costChangeV + " order change: " + costChangeO);
 			// termination condition
 			if (costChangeV >= 0 && costChangeO >= 0) {
 				plan1.addTask(remove, removedTask);
@@ -101,22 +100,16 @@ public class TaskAssignment {
 
 			if (costChangeV < costChangeO) {
 				planChange(bestVehicleChange);
-				//				replaceWith(bestPlan2a);
-				//				replaceWith(newPlan1);
 			} else if (costChangeV == costChangeO) {
 				if(rand.nextBoolean()) {
 					planChange(bestVehicleChange);
-					//					replaceWith(bestPlan2a);
-					//					replaceWith(newPlan1);
 				}
 				else {
 					planChange(bestOrderChange); 
-					//replaceWith(bestPlan2b);
 				}
 			}
 			else {
 				planChange(bestOrderChange);
-				//replaceWith(bestPlan2b);
 			}
 		}
 
@@ -204,6 +197,11 @@ public class TaskAssignment {
 		}
 		return cost;
 	}
+	
+	private void updateProb(VehiclePlan plan) {
+		prob = 0.3 + plan.size()/tasks.size()*.5;
+	}
+	
 
 	public List<VehiclePlan> copyPlans(List<VehiclePlan> vPlans) {
 		List<VehiclePlan> copies = new ArrayList<VehiclePlan>();

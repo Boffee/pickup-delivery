@@ -16,6 +16,8 @@ public class VehiclePlan {
 	private int index;
 	private Plan plan;
 	
+	private int heaviestTask;
+	
 	public int lastAdded;
 
 	public VehiclePlan (Vehicle _vehicle, List<Task> _tasks, int _index) {
@@ -142,111 +144,50 @@ public class VehiclePlan {
 		
 		List<Task> carriedTasks = new ArrayList<Task>();
 		List<Task> idleTasks = new ArrayList<Task>(tasks);
-		int heaviestTask = heaviestTaskWeight(tasks);
+		heaviestTask = heaviestTaskWeight(tasks);
 		
 		City currCity = vehicle.getCurrentCity();
 		plan = new Plan(currCity);
 		
-		List<Task> removedTasks = new ArrayList<Task>();
-		// pickup tasks that are on the path to the current task and are within the capacity
-		for (int i = 0; i < idleTasks.size(); i++) {
-			Task idleTask = idleTasks.get(i);
-			if (idleTask.pickupCity == currCity) {
-				int totalWeight = sumWeight(carriedTasks) + heaviestTask; 
-				if (i != 0) {
-					totalWeight += idleTask.weight;
-				}
-				if (totalWeight <= vehicle.capacity()) {
-					carriedTasks.add(idleTask);
-					idleTasks.remove(idleTask);
-					
-					plan.appendPickup(idleTask);
-				}
-			}
-		}
-		removeFromList(removedTasks, idleTasks);
+		pickupTasks(currCity, carriedTasks, idleTasks, 2*heaviestTask);
 		
 		for (Task targetTask: tasks) {
-			
+
 			if (idleTasks.contains(targetTask)) {
-			
-				for (City city : currCity.pathTo(targetTask.pickupCity)) {
+				
+				List<City> cities = currCity.pathTo(targetTask.pickupCity);
+				for (City city : cities) {
 					plan.appendMove(city);
-					
 					cost += currCity.distanceTo(city) * vehicle.costPerKm();
 					currCity = city;
 
-					// deliver tasks that are on the current path
-					for (int i = carriedTasks.size()-1; i >= 0; i--) {
-						Task carriedTask = carriedTasks.get(i);
-						if (carriedTask.deliveryCity == currCity) {
-							carriedTasks.remove(carriedTask);
-							
-							plan.appendDelivery(carriedTask);
-						}
+					deliverTasks(currCity, carriedTasks, idleTasks);
+					if (city == targetTask.pickupCity) {
+						carriedTasks.add(targetTask);
+						idleTasks.remove(targetTask);
+
+						plan.appendPickup(targetTask);
 					}
-					
-					removedTasks = new ArrayList<Task>();
-					// pickup tasks that are on the path to the current task and are within the capacity
-					for (int i = 0; i < idleTasks.size(); i++) {
-						Task idleTask = idleTasks.get(i);
-						if (idleTask.pickupCity == currCity) {
-							int totalWeight = sumWeight(carriedTasks) + heaviestTask;
-							if (idleTask != targetTask) {
-								totalWeight += idleTask.weight;
-							}
-							if (totalWeight <= vehicle.capacity()) {
-								carriedTasks.add(idleTask);
-								idleTasks.remove(idleTask);
-								
-								plan.appendPickup(idleTask);
-							}
-						}
-					}
-					removeFromList(removedTasks, idleTasks);
+					pickupTasks(currCity, carriedTasks, idleTasks, 2*heaviestTask);
 				}
 			}
 			
 			if (carriedTasks.contains(targetTask)) {
+				
 				List<City> cities = currCity.pathTo(targetTask.deliveryCity);
 				for (City city : cities) {
 					plan.appendMove(city);
-					
 					cost += currCity.distanceTo(city) * vehicle.costPerKm();
 					currCity = city;
-
-					// deliver tasks that are on the current path
-					for (int i = carriedTasks.size()-1; i >= 0; i--) {
-						Task carriedTask = carriedTasks.get(i);
-						if (carriedTask.deliveryCity == currCity) {
-							carriedTasks.remove(carriedTask);
-							
-							plan.appendDelivery(carriedTask);
-						}
-					}
 					
-					removedTasks = new ArrayList<Task>();
-					// pickup tasks that are on the path to the current task and are within the capacity
-					for (int i = 0; i < idleTasks.size(); i++) {
-						Task idleTask = idleTasks.get(i);
-						if (idleTask.pickupCity == currCity) {
-							int totalWeight = sumWeight(carriedTasks) + heaviestTask;
-							if (currCity != targetTask.deliveryCity) {
-								totalWeight += idleTask.weight;
-							}
-							if (totalWeight <= vehicle.capacity()) {
-								carriedTasks.add(idleTask);
-								removedTasks.add(idleTask);
-								
-								plan.appendPickup(idleTask);
-							}
-						}
-					}
-					removeFromList(removedTasks, idleTasks);
+					deliverTasks(currCity, carriedTasks, idleTasks);
+					pickupTasks(currCity, carriedTasks, idleTasks, heaviestTask);
 				}
 			}
 		}
-//		System.out.println(carriedTasks.size() + " : " + idleTasks.size());
+		if (carriedTasks.size() != 0 && idleTasks.size() != 0) {
+			System.out.println(carriedTasks.size() + " : " + idleTasks.size());
+		}
 	}
 	
 	private int heaviestTaskWeight(List<Task> tasks) {
@@ -257,6 +198,36 @@ public class VehiclePlan {
 			}
 		}
 		return heaviest;
+	}
+	
+	private void pickupTasks(City currCity, List<Task> carriedTasks, List<Task> idleTasks, int allowableWeight) {
+		List<Task> removedTasks = new ArrayList<Task>();
+		// pickup tasks that are on the path to the current task and are within the capacity
+		for (int i = 0; i < idleTasks.size(); i++) {
+			Task idleTask = idleTasks.get(i);
+			if (idleTask.pickupCity == currCity) {
+				int totalWeight = sumWeight(carriedTasks) + allowableWeight;
+				if (totalWeight <= vehicle.capacity()) {
+					carriedTasks.add(idleTask);
+					removedTasks.add(idleTask);
+					
+					plan.appendPickup(idleTask);
+				}
+			}
+		}
+		removeFromList(removedTasks, idleTasks);
+	}
+	
+	private void deliverTasks(City currCity, List<Task> carriedTasks, List<Task> idleTasks) {
+		// deliver tasks that are on the current path
+		for (int i = carriedTasks.size()-1; i >= 0; i--) {
+			Task carriedTask = carriedTasks.get(i);
+			if (carriedTask.deliveryCity == currCity) {
+				carriedTasks.remove(carriedTask);
+				
+				plan.appendDelivery(carriedTask);
+			}
+		}
 	}
 		
 	private void removeFromList(List<Task> removes, List<Task> orig) {
