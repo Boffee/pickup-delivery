@@ -39,6 +39,7 @@ public class Centralized implements CentralizedBehavior {
 	public List<Plan> plan(List<Vehicle> vehicles, TaskSet tasks) {
 		
 //		System.out.println("Agent " + agent.id() + " has tasks " + tasks);
+	    long start = System.currentTimeMillis();
 
 		List<VehiclePlan> vPlans = (new TaskAssignment(vehicles, tasks)).getPlans();
 		List<Plan> plans = new ArrayList<Plan>();
@@ -49,6 +50,9 @@ public class Centralized implements CentralizedBehavior {
 				}
 			}
 		}
+		
+		System.out.println("Running time: " + (System.currentTimeMillis()-start) + " ms");
+
 		return plans;
 	}
 	

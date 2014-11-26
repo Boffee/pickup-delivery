@@ -4,9 +4,3 @@
 	<agents>
 		<agent name="deliberative-ASTAR">
 			<vehicle name="Vehicle 1"/>
-		</agent>
-		<agent name="deliberative-ASTAR">
-			<vehicle name="Vehicle 2"/>
-		</agent>
-		<agent name="deliberative-ASTAR">
-			<vehicle name="Vehicle 3"/>

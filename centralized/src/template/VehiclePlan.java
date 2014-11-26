@@ -186,6 +186,7 @@ public class VehiclePlan {
 		
 		for (Task targetTask: tasks) {
 			// if targetTask is not picked up yet
+			boolean pickedup = false;
 			if (idleTasks.contains(targetTask)) {
 				// move through all cities on path to pickup
 				List<City> cities = currCity.pathTo(targetTask.pickupCity);
@@ -198,10 +199,14 @@ public class VehiclePlan {
 					if (city == targetTask.pickupCity) {
 						carriedTasks.add(targetTask);
 						idleTasks.remove(targetTask);
-
+						pickedup = true;
 						plan.appendPickup(targetTask);
 					}
-					pickupTasks(currCity, carriedTasks, idleTasks, 2*heaviestTask);
+					if (pickedup = true) {
+						pickupTasks(currCity, carriedTasks, idleTasks, heaviestTask);
+					} else {
+						pickupTasks(currCity, carriedTasks, idleTasks, 2*heaviestTask);
+					}
 				}
 			}
 			
@@ -247,33 +252,33 @@ public class VehiclePlan {
 	 * @param allowableWeight
 	 */
 	private void pickupTasks(City currCity, List<Task> carriedTasks, List<Task> idleTasks, int allowableWeight) {
-		List<Task> removedTasks = new ArrayList<Task>();
-		// pickup tasks that are on the path to the current task and are within the capacity
-		for (int i = 0; i < idleTasks.size(); i++) {
-			Task idleTask = idleTasks.get(i);
-			if (idleTask.pickupCity == currCity) {
-				int totalWeight = sumWeight(carriedTasks) + allowableWeight;
-				if (totalWeight <= vehicle.capacity()) {
-					carriedTasks.add(idleTask);
-					removedTasks.add(idleTask);
-					
-					plan.appendPickup(idleTask);
-				}
-			}
-		}
-		removeFromList(removedTasks, idleTasks);
-//		if (idleTasks.size() == 0) return;
-//		Task nextTask = idleTasks.get(0);
-//		if(currCity == nextTask.pickupCity) {
-//			if (sumWeight(carriedTasks) + allowableWeight <= vehicle.capacity()) {
-//				carriedTasks.add(nextTask);
-//				idleTasks.remove(nextTask);
-//				
-//				plan.appendPickup(nextTask);
-//				
-//				pickupTasks(currCity, carriedTasks, idleTasks, allowableWeight);
+//		List<Task> removedTasks = new ArrayList<Task>();
+//		// pickup tasks that are on the path to the current task and are within the capacity
+//		for (int i = 0; i < idleTasks.size(); i++) {
+//			Task idleTask = idleTasks.get(i);
+//			if (idleTask.pickupCity == currCity) {
+//				int totalWeight = sumWeight(carriedTasks) + allowableWeight;
+//				if (totalWeight <= vehicle.capacity()) {
+//					carriedTasks.add(idleTask);
+//					removedTasks.add(idleTask);
+//					
+//					plan.appendPickup(idleTask);
+//				}
 //			}
 //		}
+//		removeFromList(removedTasks, idleTasks);
+		if (idleTasks.size() == 0) return;
+		Task nextTask = idleTasks.get(0);
+		if(currCity == nextTask.pickupCity) {
+			if (sumWeight(carriedTasks) + allowableWeight <= vehicle.capacity()) {
+				carriedTasks.add(nextTask);
+				idleTasks.remove(nextTask);
+				
+				plan.appendPickup(nextTask);
+				
+				pickupTasks(currCity, carriedTasks, idleTasks, allowableWeight);
+			}
+		}
 	}
 	
 	/**
