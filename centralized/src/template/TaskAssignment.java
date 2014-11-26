@@ -203,7 +203,7 @@ public class TaskAssignment {
 		bestPlans = copyPlans(plans);
 		boolean stop = false;
 		int iterations = 0;
-		while (iterations < 50000) {
+		while (iterations < 10000) {
 			stop = chooseNeighbor();
 			// keep track of how stuck the current TaskAssignment is
 			if (stop) {
