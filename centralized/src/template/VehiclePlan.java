@@ -125,7 +125,7 @@ public class VehiclePlan {
 	public List<VehiclePlan> changeOrders() {
 		computeCost();
 		List<VehiclePlan> planOrders = new ArrayList<VehiclePlan>();
-		planOrders.add(this);
+		planOrders.add(new VehiclePlan(this));
 		for (int i = 0; i < tasks.size()-1; i++) {
 			for (int j = i+1; j < tasks.size(); j++) {
 				VehiclePlan newPlan = new VehiclePlan(this);

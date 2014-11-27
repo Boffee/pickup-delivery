@@ -110,7 +110,7 @@ public class TaskAssignment {
 					+plan1.getCost()-origPlan1Cost;
 
 			// termination condition, if both costChange are >= 0, no improvements can be made in this iteration
-			if (costChangeV >= 0 && costChangeO >= 0) {
+			if (costChangeV >= 0 && costChangeO >= 0 && rand.nextDouble() > prob) {
 				plan1.addTask(remove, removedTask);
 				return true;
 			}
@@ -209,7 +209,7 @@ public class TaskAssignment {
 			if (stop) {
 				stuck++;
 			} else {
-				stuck = 0;
+				stuck /= 2;
 			}
 			iterations++;
 			// keeps track of the best TaskAssignment
