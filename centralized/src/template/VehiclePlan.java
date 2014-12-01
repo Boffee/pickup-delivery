@@ -294,7 +294,7 @@ public class VehiclePlan {
 //				if (idleTasks.size() == 0) return;
 //				Task nextTask = idleTasks.get(0);
 //				if(currCity == nextTask.pickupCity) {
-//					if (sumWeight(carriedTasks) + allowableWeight <= vehicle.capacity()) {
+//					if (sumWeight(carriedTasks) + nextTask.weight <= vehicle.capacity()-allowableWeight) {
 //						carriedTasks.add(nextTask);
 //						idleTasks.remove(nextTask);
 //						
