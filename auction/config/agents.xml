@@ -4,9 +4,9 @@
 	<!-- A list of agents and their behavior classes -->
 	
 	<!-- #### AUCTION AGENTS ### -->
-	<agent name="auction-random">
+	<agent name="auction">
 		<set class-path="bin/"/>
-		<set class-name="template.AuctionTemplate"/>
+		<set class-name="template.AuctionMain"/>
 	</agent>
 	
 </agents>
